@@ -63,7 +63,7 @@ struct rabbit_context {
 
 // Allocates memory for the RABBIT context
 struct rabbit_context *
-rabbit_context_new()
+rabbit_context_new(void)
 {
 	struct rabbit_context *ctx;
 	ctx = malloc(sizeof(*ctx));
@@ -185,7 +185,7 @@ rabbit_iv_setup(struct rabbit_context *ctx)
 // Fill the rabbit context (key and iv)
 // Return value: 0 (if all is well), -1 (if all bad) 
 int
-rabbit_set_key_and_iv(struct rabbit_context *ctx, uint8_t *key, int keylen, uint8_t iv[8])
+rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int keylen, const uint8_t iv[8])
 {
 
 	if(keylen <= RABBIT)
@@ -210,7 +210,7 @@ rabbit_set_key_and_iv(struct rabbit_context *ctx, uint8_t *key, int keylen, uint
  * out - pointer on output array
 */
 void
-rabbit_encrypt(struct rabbit_context *ctx, uint8_t *buf, uint32_t buflen, uint8_t *out)
+rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out)
 {
 	uint8_t temp[16];
 	int i;
@@ -247,7 +247,7 @@ rabbit_encrypt(struct rabbit_context *ctx, uint8_t *buf, uint32_t buflen, uint8_
 
 // RABBIT decrypt function. See rabbit_encrypt
 void
-rabbit_decrypt(struct rabbit_context *ctx, uint8_t *buf, uint32_t buflen, uint8_t *out)
+rabbit_decrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out)
 {
 	rabbit_encrypt(ctx, buf, buflen, out);
 }

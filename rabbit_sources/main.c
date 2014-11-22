@@ -1,16 +1,13 @@
-// This program tests the library rabbit.h
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdint.h>
 #include <string.h>
 #include <sys/time.h>
 
-#include "rabbit.h"
+#include "ecrypt-sync.h"
 
 #define BUFLEN	10000000
 
-// Struct for time value
 struct timeval t1, t2;
 
 uint8_t buf[BUFLEN];
@@ -20,13 +17,13 @@ uint8_t key[16];
 uint8_t iv[8];
 
 static void
-time_start(void)
+time_start()
 {
 	gettimeofday(&t1, NULL);
 }
 
 static uint32_t
-time_stop(void)
+time_stop()
 {
 	gettimeofday(&t2, NULL);
 
@@ -44,34 +41,20 @@ time_stop(void)
 int
 main()
 {
-	struct rabbit_context *ctx;
-
+	ECRYPT_ctx x;
+	
 	memset(buf, 'q', sizeof(buf));
 	memset(key, 'k', sizeof(key));
 	memset(iv, 'i', sizeof(iv));
 	
 	time_start();
+	ECRYPT_init();
 
-	if((ctx = rabbit_context_new()) == NULL) {
-		printf("Memory allocation error!\n");
-		exit(1);
-	}
-
-	if(rabbit_set_key_and_iv(ctx, (uint8_t *)key, 16, iv)) {
-		printf("Rabbit context filling error!\n");
-		exit(1);
-	}
+	ECRYPT_keysetup(&x, (uint8_t *)key, 16, 64);
 	
-	rabbit_encrypt(ctx, buf, BUFLEN, out1);
+	ECRYPT_process_packet(0, &x, iv, buf, out1, BUFLEN);
 	
-	if(rabbit_set_key_and_iv(ctx, (uint8_t *)key, 16, iv)) {
-		printf("Rabbit context felling error 2!\n");
-		exit(1);
-	}
-	
-	rabbit_decrypt(ctx, out1, BUFLEN, out2);
-	
-	rabbit_context_free(&ctx);
+	ECRYPT_process_packet(1, &x, iv, out1, out2, BUFLEN);
 	
 	printf("Run time = %d\n\n", time_stop());
 

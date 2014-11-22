@@ -9,12 +9,12 @@
 
 struct rabbit_context;
 
-struct rabbit_context *rabbit_context_new();
+struct rabbit_context *rabbit_context_new(void);
 void rabbit_context_free(struct rabbit_context **ctx);
 
-int rabbit_set_key_and_iv(struct rabbit_context *ctx, uint8_t *key, int keylen, uint8_t iv[8]);
+int rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int keylen, const uint8_t iv[8]);
 
-void rabbit_encrypt(struct rabbit_context *ctx, uint8_t *buf, uint32_t buflen, uint8_t *out);
-void rabbit_decrypt(struct rabbit_context *ctx, uint8_t *buf, uint32_t buflen, uint8_t *out);
+void rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out);
+void rabbit_decrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out);
 
 #endif
