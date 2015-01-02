@@ -93,6 +93,16 @@ rabbit_next_state(struct rabbit_context *ctx)
 
 	memcpy(c_old, ctx->c, sizeof(ctx->c));
 	
+	ctx->c[0] = ctx->c[0] + A0 + ctx->carry;
+	ctx->c[1] = ctx->c[1] + A1 + (ctx->c[0] < c_old[0]);
+	ctx->c[2] = ctx->c[2] + A2 + (ctx->c[1] < c_old[1]);
+	ctx->c[3] = ctx->c[3] + A3 + (ctx->c[2] < c_old[2]);
+	ctx->c[4] = ctx->c[4] + A4 + (ctx->c[3] < c_old[3]);
+	ctx->c[5] = ctx->c[5] + A5 + (ctx->c[4] < c_old[4]);
+	ctx->c[6] = ctx->c[6] + A6 + (ctx->c[5] < c_old[5]);
+	ctx->c[7] = ctx->c[7] + A7 + (ctx->c[6] < c_old[6]);
+	ctx->carry = (ctx->c[7] < c_old[7]);
+	
 	for(i = 0; i < 8; i++)
 		G_FUNC((ctx->x[i] + ctx->c[i]), g[i]);
 
@@ -104,16 +114,6 @@ rabbit_next_state(struct rabbit_context *ctx)
 	ctx->x[5] = g[5] + ROTL32(g[4], 8) + g[3];
 	ctx->x[6] = g[6] + ROTL32(g[5], 16) + ROTL32(g[4], 16);
 	ctx->x[7] = g[7] + ROTL32(g[6], 8) + g[5];
-
-	ctx->c[0] = ctx->c[0] + A0 + ctx->carry;
-	ctx->c[1] = ctx->c[1] + A1 + (ctx->c[0] < c_old[0]);
-	ctx->c[2] = ctx->c[2] + A2 + (ctx->c[1] < c_old[1]);
-	ctx->c[3] = ctx->c[3] + A3 + (ctx->c[2] < c_old[2]);
-	ctx->c[4] = ctx->c[4] + A4 + (ctx->c[3] < c_old[3]);
-	ctx->c[5] = ctx->c[5] + A5 + (ctx->c[4] < c_old[4]);
-	ctx->c[6] = ctx->c[6] + A6 + (ctx->c[5] < c_old[5]);
-	ctx->c[7] = ctx->c[7] + A7 + (ctx->c[6] < c_old[6]);
-	ctx->carry = (ctx->c[7] < c_old[7]);
 }
 
 // Setup secret key
@@ -124,10 +124,10 @@ rabbit_key_setup(struct rabbit_context *ctx)
 	int i;
 
 	// Copy the secret key into 4 parts
-	k0 = U8TO32_LITTLE((uint8_t *)(ctx->key + 0));
-	k1 = U8TO32_LITTLE((uint8_t *)(ctx->key + 4));
-	k2 = U8TO32_LITTLE((uint8_t *)(ctx->key + 8));
-	k3 = U8TO32_LITTLE((uint8_t *)(ctx->key + 12));
+	k0 = U8TO32_LITTLE((ctx->key + 0));
+	k1 = U8TO32_LITTLE((ctx->key + 4));
+	k2 = U8TO32_LITTLE((ctx->key + 8));
+	k3 = U8TO32_LITTLE((ctx->key + 12));
 	
 	ctx->x[0] = k0;
 	ctx->x[2] = k1;
@@ -164,8 +164,8 @@ rabbit_iv_setup(struct rabbit_context *ctx)
 	uint32_t iv0, iv1, iv2, iv3;
 	int i;
 	
-	iv0 = U8TO32_LITTLE((uint8_t *)(ctx->iv + 0));
-	iv1 = U8TO32_LITTLE((uint8_t *)(ctx->iv + 4));
+	iv0 = U8TO32_LITTLE((ctx->iv + 0));
+	iv1 = U8TO32_LITTLE((ctx->iv + 4));
 	iv2 = (iv1 & 0xffff0000) | (iv0 >> 16);
 	iv3 = (iv1 << 16) | (iv0 & 0x0000ffff);
 		
@@ -196,10 +196,6 @@ rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int 
 	memcpy(ctx->key, key, keylen);
 	memcpy(ctx->iv, iv, 8);
 	
-	// Setup key and vector initialization
-	rabbit_key_setup(ctx);
-	rabbit_iv_setup(ctx);
-
 	return 0;
 }
 
@@ -214,6 +210,10 @@ rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, 
 {
 	uint8_t temp[16];
 	int i;
+	
+	// Setup key and vector initialization
+	rabbit_key_setup(ctx);
+	rabbit_iv_setup(ctx);
 
 	for(; buflen >= 16; buflen -= 16, buf += 16, out += 16) {
 		rabbit_next_state(ctx);
@@ -227,7 +227,7 @@ rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, 
 		*(uint32_t *)(out + 12) = *(uint32_t *)(buf + 12) ^ ctx->x[6] ^ 
 			(ctx->x[3] >> 16) ^ (ctx->x[1] << 16);
 	}
-
+	
 	if(buflen) {
 		rabbit_next_state(ctx);
 		
