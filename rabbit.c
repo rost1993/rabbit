@@ -196,6 +196,10 @@ rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int 
 	memcpy(ctx->key, key, keylen);
 	memcpy(ctx->iv, iv, 8);
 	
+	// Setup key and vector initialization
+	rabbit_key_setup(ctx);
+	rabbit_iv_setup(ctx);
+
 	return 0;
 }
 
@@ -211,10 +215,6 @@ rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, 
 	uint8_t temp[16];
 	int i;
 	
-	// Setup key and vector initialization
-	rabbit_key_setup(ctx);
-	rabbit_iv_setup(ctx);
-
 	for(; buflen >= 16; buflen -= 16, buf += 16, out += 16) {
 		rabbit_next_state(ctx);
 
