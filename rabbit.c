@@ -1,4 +1,5 @@
-/* This program implements the RABBIT-128 algorithm.
+/* 
+ * This program implements the RABBIT-128 algorithm.
  * Developed Martin Boesgaard, Mette Vesterager, Thomas Christensen, Erik Zenner.
  * Company CRYPTICO A/S Fruebjergvej 3, Copenhagen, Denmark
  * The RABBIT-128 home page - http://www.ecrypt.eu.org/stream/.
@@ -20,6 +21,16 @@
 #define RABBIT	128
 
 #define ROTL32(v, n)	((v << n) | (v >> (32 - n)))
+
+// Selecting the byte order
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define U32TO32(x)								\
+	((x << 24) | ((x << 8) & 0xFF0000) | ((x >> 8) & 0xFF00) | (x >> 24))
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
+#define U32TO32(x)	(x)
+#else
+#error unsuported byte order
+#endif
 
 #define U8TO32_LITTLE(p) 					  \
 	(((uint32_t)((p)[0])      ) | ((uint32_t)((p)[1]) << 8) | \
@@ -203,7 +214,8 @@ rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int 
 	return 0;
 }
 
-/* RABBIT encrypt algorithm.
+/* 
+ * RABBIT encrypt algorithm.
  * ctx - pointer on RABBIT context
  * buf - pointer on buffer data
  * buflen - length the data buffer
@@ -218,27 +230,27 @@ rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, 
 	for(; buflen >= 16; buflen -= 16, buf += 16, out += 16) {
 		rabbit_next_state(ctx);
 
-		*(uint32_t *)(out +  0) = *(uint32_t *)(buf +  0) ^ ctx->x[0] ^
-			(ctx->x[5] >> 16) ^ (ctx->x[3] << 16);
-		*(uint32_t *)(out +  4) = *(uint32_t *)(buf +  4) ^ ctx->x[2] ^
-			(ctx->x[7] >> 16) ^ (ctx->x[5] << 16);
-		*(uint32_t *)(out +  8) = *(uint32_t *)(buf +  8) ^ ctx->x[4] ^
-			(ctx->x[1] >> 16) ^ (ctx->x[7] << 16);
-		*(uint32_t *)(out + 12) = *(uint32_t *)(buf + 12) ^ ctx->x[6] ^ 
-			(ctx->x[3] >> 16) ^ (ctx->x[1] << 16);
+		*(uint32_t *)(out +  0) = *(uint32_t *)(buf +  0) ^ U32TO32(ctx->x[0] ^
+			(ctx->x[5] >> 16) ^ (ctx->x[3] << 16));
+		*(uint32_t *)(out +  4) = *(uint32_t *)(buf +  4) ^ U32TO32(ctx->x[2] ^
+			(ctx->x[7] >> 16) ^ (ctx->x[5] << 16));
+		*(uint32_t *)(out +  8) = *(uint32_t *)(buf +  8) ^ U32TO32(ctx->x[4] ^
+			(ctx->x[1] >> 16) ^ (ctx->x[7] << 16));
+		*(uint32_t *)(out + 12) = *(uint32_t *)(buf + 12) ^ U32TO32(ctx->x[6] ^ 
+			(ctx->x[3] >> 16) ^ (ctx->x[1] << 16));
 	}
 	
 	if(buflen) {
 		rabbit_next_state(ctx);
 		
-		*(uint32_t *)(temp +  0) = ctx->x[0] ^ (ctx->x[5] >> 16) ^
-			(ctx->x[3] << 16);
-		*(uint32_t *)(temp +  4) = ctx->x[2] ^ (ctx->x[7] >> 16) ^
-			(ctx->x[5] << 16);
-		*(uint32_t *)(temp +  8) = ctx->x[4] ^ (ctx->x[1] >> 16) ^ 
-			(ctx->x[7] << 16);
-		*(uint32_t *)(temp + 12) = ctx->x[6] ^ (ctx->x[3] >> 16) ^ 
-			(ctx->x[1] << 16);
+		*(uint32_t *)(temp +  0) = U32TO32(ctx->x[0] ^ (ctx->x[5] >> 16) ^
+			(ctx->x[3] << 16));
+		*(uint32_t *)(temp +  4) = U32TO32(ctx->x[2] ^ (ctx->x[7] >> 16) ^
+			(ctx->x[5] << 16));
+		*(uint32_t *)(temp +  8) = U32TO32(ctx->x[4] ^ (ctx->x[1] >> 16) ^ 
+			(ctx->x[7] << 16));
+		*(uint32_t *)(temp + 12) = U32TO32(ctx->x[6] ^ (ctx->x[3] >> 16) ^ 
+			(ctx->x[1] << 16));
 
 		for(i = 0; i < buflen; i++)
 			out[i] = buf[i] ^ temp[i];	
