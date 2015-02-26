@@ -4,12 +4,14 @@ SOURCES=./rabbit_sources
 
 MAIN_OBJS=rabbit.o main.o
 BIGTEST_OBJS=rabbit.o bigtest.o
+TEST_VECTORS_OBJS=rabbit.o testvectors.o
 
 MAIN_DEVELOPER_OBJS=$(patsubst %, $(SOURCES)/%, rabbit.o ecrypt-sync.o main.o)
 BIGTEST_DEVELOPER_OBJS=$(patsubst %, $(SOURCES)/%, rabbit.o ecrypt-sync.o bigtest_2.o)
 
 MAIN=main
 BIGTEST=bigtest
+TEST_VECTORS=testvectors
 
 MAIN_DEVELOPER=$(SOURCES)/main
 BIGTEST_DEVELOPER=$(SOURCES)/bigtest_2
@@ -29,6 +31,9 @@ $(MAIN_DEVELOPER): $(MAIN_DEVELOPER_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 $(BIGTEST_DEVELOPER): $(BIGTEST_DEVELOPER_OBJS)
+	$(CC) $(CFLAGS) -o $@ $^
+
+$(TEST_VECTORS): $(TEST_VECTORS_OBJS)
 	$(CC) $(CFLAGS) -o $@ $^
 
 clean:

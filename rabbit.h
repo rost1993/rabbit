@@ -17,4 +17,6 @@ int rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const 
 void rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out);
 void rabbit_decrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out);
 
+void rabbit_test_vectors(struct rabbit_context *ctx);
+
 #endif
