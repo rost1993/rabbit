@@ -224,7 +224,7 @@ rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int 
 void
 rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out)
 {
-	uint8_t temp[16];
+	uint32_t keystream[4];
 	int i;
 	
 	for(; buflen >= 16; buflen -= 16, buf += 16, out += 16) {
@@ -243,17 +243,13 @@ rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, 
 	if(buflen) {
 		rabbit_next_state(ctx);
 		
-		*(uint32_t *)(temp +  0) = U32TO32((ctx->x[0] ^ (ctx->x[5] >> 16) ^
-			(ctx->x[3] << 16)));
-		*(uint32_t *)(temp +  4) = U32TO32((ctx->x[2] ^ (ctx->x[7] >> 16) ^
-			(ctx->x[5] << 16)));
-		*(uint32_t *)(temp +  8) = U32TO32((ctx->x[4] ^ (ctx->x[1] >> 16) ^ 
-			(ctx->x[7] << 16)));
-		*(uint32_t *)(temp + 12) = U32TO32((ctx->x[6] ^ (ctx->x[3] >> 16) ^ 
-			(ctx->x[1] << 16)));
+		keystream[0] = U32TO32((ctx->x[0] ^ (ctx->x[5] >> 16) ^ (ctx->x[3] << 16)));
+		keystream[1] = U32TO32((ctx->x[2] ^ (ctx->x[7] >> 16) ^ (ctx->x[5] << 16)));
+		keystream[2] = U32TO32((ctx->x[4] ^ (ctx->x[1] >> 16) ^ (ctx->x[7] << 16)));
+		keystream[3] = U32TO32((ctx->x[6] ^ (ctx->x[3] >> 16) ^ (ctx->x[1] << 16)));
 
 		for(i = 0; i < buflen; i++)
-			out[i] = buf[i] ^ temp[i];	
+			out[i] = buf[i] ^ ((uint8_t *)keystream)[i];	
 	}
 }
 
@@ -264,20 +260,30 @@ rabbit_decrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, 
 	rabbit_encrypt(ctx, buf, buflen, out);
 }
 
+#if __BYTE_ORDER == __BIG_ENDIAN
+#define PRINT_U32TO32(x) \
+	(printf("%02x %02x %02x %02x ", (x >> 24), ((x >> 16) & 0xFF), ((x >> 8) & 0xFF), (x & 0xFF)))
+#elif __BYTE_ORDER == __LITTLE_ENDIAN
+#define PRINT_U32TO32(x) \
+	(printf("%02x %02x %02x %02x ", (x & 0xFF), ((x >> 8) & 0xFF), ((x >> 16) & 0xFF), (x >> 24)))
+#else
+#error unsupported byte order
+#endif
+
 // Test vectors print
 void
 rabbit_test_vectors(struct rabbit_context *ctx)
 {
-	uint8_t keystream[16];
+	uint32_t keystream[4];
 	int i;
 
 	rabbit_next_state(ctx);
 	
-	*(uint32_t *)(keystream +  0) = U32TO32((ctx->x[0] ^ (ctx->x[5] >> 16) ^ (ctx->x[3] << 16)));
-	*(uint32_t *)(keystream +  4) = U32TO32((ctx->x[2] ^ (ctx->x[7] >> 16) ^ (ctx->x[5] << 16)));
-	*(uint32_t *)(keystream +  8) = U32TO32((ctx->x[4] ^ (ctx->x[1] >> 16) ^ (ctx->x[7] << 16)));
-	*(uint32_t *)(keystream + 12) = U32TO32((ctx->x[6] ^ (ctx->x[3] >> 16) ^ (ctx->x[1] << 16)));
-	
+	keystream[0] = U32TO32((ctx->x[0] ^ (ctx->x[5] >> 16) ^ (ctx->x[3] << 16)));
+	keystream[1] = U32TO32((ctx->x[2] ^ (ctx->x[7] >> 16) ^ (ctx->x[5] << 16)));
+	keystream[2] = U32TO32((ctx->x[4] ^ (ctx->x[1] >> 16) ^ (ctx->x[7] << 16)));
+	keystream[3] = U32TO32((ctx->x[6] ^ (ctx->x[3] >> 16) ^ (ctx->x[1] << 16)));
+
 	printf("\n Test vectors for the Rabbit:\n");
 
 	printf("\nKey:       ");
@@ -292,8 +298,8 @@ rabbit_test_vectors(struct rabbit_context *ctx)
 	
 	printf("\nKeystream: ");
 	
-	for(i = 0; i < 16; i++)
-		printf("%02x ", keystream[i]);
+	for(i = 0; i < 4; i++)
+		PRINT_U32TO32(keystream[i]);
 	
 	printf("\n\n");
 }
