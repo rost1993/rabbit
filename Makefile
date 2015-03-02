@@ -1,5 +1,5 @@
 CC=gcc
-CFLAGS=-Wall
+CFLAGS=-Wall -O3
 SOURCES=./rabbit_sources
 
 MAIN_OBJS=rabbit.o main.o
