@@ -30,14 +30,21 @@ main(void)
 		exit(1);
 	}
 	
-	if(rabbit_set_key_and_iv(ctx, key1, 16, iv1)) {
+	if(rabbit_set_key_and_iv(ctx, key1, 16, iv1, 8)) {
 		printf("Rabbit context filling error!\n");
 		exit(1);
 	}
 	
 	rabbit_test_vectors(ctx);
 
-	if(rabbit_set_key_and_iv(ctx, key2, 16, iv2)) {
+	rabbit_context_free(&ctx);
+
+	if((ctx = rabbit_context_new()) == NULL) {
+		printf("Memory allocation error!\n");
+		exit(1);
+	}
+
+	if(rabbit_set_key_and_iv(ctx, key2, 16, iv2, 8)) {
 		printf("Rabbit context filling error!\n");
 		exit(1);
 	}
