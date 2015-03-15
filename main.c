@@ -57,14 +57,14 @@ main()
 		exit(1);
 	}
 
-	if(rabbit_set_key_and_iv(ctx, (uint8_t *)key, 16, iv)) {
+	if(rabbit_set_key_and_iv(ctx, (uint8_t *)key, 16, iv, 8)) {
 		printf("Rabbit context filling error!\n");
 		exit(1);
 	}
 	
 	rabbit_encrypt(ctx, buf, BUFLEN, out1);
 	
-	if(rabbit_set_key_and_iv(ctx, (uint8_t *)key, 16, iv)) {
+	if(rabbit_set_key_and_iv(ctx, (uint8_t *)key, 16, iv, 8)) {
 		printf("Rabbit context felling error 2!\n");
 		exit(1);
 	}

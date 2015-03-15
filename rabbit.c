@@ -18,7 +18,7 @@
 
 #include "rabbit.h"
 
-#define RABBIT	128
+#define RABBIT	16
 
 #define ROTL32(v, n)	((v << n) | (v >> (32 - n)))
 
@@ -56,7 +56,8 @@
 #define A7	A1
 
 /* RABBIT-128 context
- * keylen - chiper key length
+ * keylen - chiper key length in bytes
+ * ivlen - vector initializaton length in bytes
  * key - chiper key
  * iv - initialization vector
  * x - the state variables
@@ -65,6 +66,7 @@
 */
 struct rabbit_context {
 	int keylen;
+	int ivlen;
 	uint8_t key[16];
 	uint8_t iv[8];
 	uint32_t x[8];
@@ -77,7 +79,7 @@ struct rabbit_context *
 rabbit_context_new(void)
 {
 	struct rabbit_context *ctx;
-	ctx = malloc(sizeof(*ctx));
+	ctx = (struct rabbit_context *)malloc(sizeof(*ctx));
 
 	if(ctx == NULL)
 		return NULL;
@@ -196,16 +198,21 @@ rabbit_iv_setup(struct rabbit_context *ctx)
 // Fill the rabbit context (key and iv)
 // Return value: 0 (if all is well), -1 (if all bad) 
 int
-rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int keylen, const uint8_t iv[8])
+rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int keylen, const uint8_t iv[8], const int ivlen)
 {
 
-	if(keylen <= RABBIT)
+	if((keylen > 0) && (keylen <= RABBIT))
 		ctx->keylen = keylen;
 	else
 		return -1;
 	
-	memcpy(ctx->key, key, keylen);
-	memcpy(ctx->iv, iv, 8);
+	if((ivlen > 0) && (ivlen <= 8))
+		ctx->ivlen = ivlen;
+	else
+		return -1;
+	
+	memcpy(ctx->key, key, ctx->keylen);
+	memcpy(ctx->iv, iv, ctx->ivlen);
 	
 	// Setup key and vector initialization
 	rabbit_key_setup(ctx);
@@ -225,7 +232,7 @@ void
 rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out)
 {
 	uint32_t keystream[4];
-	int i;
+	uint32_t i;
 	
 	for(; buflen >= 16; buflen -= 16, buf += 16, out += 16) {
 		rabbit_next_state(ctx);
