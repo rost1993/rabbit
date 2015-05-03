@@ -8,7 +8,7 @@
 
 #include "rabbit.h"
 
-#define BUFLEN	100000000
+#define BUFLEN	10000000
 
 // Struct for time value
 struct timeval t1, t2;
@@ -52,23 +52,19 @@ main()
 	
 	time_start();
 
-	rabbit_init(&ctx);
-
 	if(rabbit_set_key_and_iv(&ctx, (uint8_t *)key, 16, iv, 8)) {
 		printf("Rabbit context filling error!\n");
 		exit(1);
 	}
 	
-	rabbit_encrypt(&ctx, buf, BUFLEN, out1);
+	rabbit_crypt(&ctx, buf, BUFLEN, out1);
 	
-	rabbit_init(&ctx);
-
 	if(rabbit_set_key_and_iv(&ctx, (uint8_t *)key, 16, iv, 8)) {
 		printf("Rabbit context felling error 2!\n");
 		exit(1);
 	}
 	
-	rabbit_decrypt(&ctx, out1, BUFLEN, out2);
+	rabbit_crypt(&ctx, out1, BUFLEN, out2);
 	
 	printf("Run time = %d\n\n", time_stop());
 

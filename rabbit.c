@@ -56,7 +56,7 @@
 #define A7	A1
 
 // Rabbit initialization function
-void
+static void
 rabbit_init(struct rabbit_context *ctx)
 {
 	memset(ctx, 0, sizeof(*ctx));
@@ -165,7 +165,8 @@ rabbit_iv_setup(struct rabbit_context *ctx)
 int
 rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int keylen, const uint8_t iv[8], const int ivlen)
 {
-
+	rabbit_init(ctx);
+	
 	if((keylen > 0) && (keylen <= RABBIT))
 		ctx->keylen = keylen;
 	else
@@ -187,14 +188,14 @@ rabbit_set_key_and_iv(struct rabbit_context *ctx, const uint8_t *key, const int 
 }
 
 /* 
- * RABBIT encrypt algorithm.
+ * RABBIT crypt algorithm.
  * ctx - pointer on RABBIT context
  * buf - pointer on buffer data
  * buflen - length the data buffer
  * out - pointer on output array
 */
 void
-rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out)
+rabbit_crypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out)
 {
 	uint32_t keystream[4];
 	uint32_t i;
@@ -223,13 +224,6 @@ rabbit_encrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, 
 		for(i = 0; i < buflen; i++)
 			out[i] = buf[i] ^ ((uint8_t *)keystream)[i];	
 	}
-}
-
-// RABBIT decrypt function. See rabbit_encrypt
-void
-rabbit_decrypt(struct rabbit_context *ctx, const uint8_t *buf, uint32_t buflen, uint8_t *out)
-{
-	rabbit_encrypt(ctx, buf, buflen, out);
 }
 
 #if __BYTE_ORDER == __BIG_ENDIAN

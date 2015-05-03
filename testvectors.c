@@ -25,16 +25,12 @@ main(void)
 	
 	struct rabbit_context ctx;
 
-	rabbit_init(&ctx);
-
 	if(rabbit_set_key_and_iv(&ctx, key1, 16, iv1, 8)) {
 		printf("Rabbit context filling error!\n");
 		exit(1);
 	}
 	
 	rabbit_test_vectors(&ctx);
-
-	rabbit_init(&ctx);
 
 	if(rabbit_set_key_and_iv(&ctx, key2, 16, iv2, 8)) {
 		printf("Rabbit context filling error!\n");

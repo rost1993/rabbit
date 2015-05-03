@@ -109,8 +109,6 @@ main(int argc, char *argv[])
 	memset(key, 'k', sizeof(key));
 	memset(iv, 'i', sizeof(iv));
 
-	rabbit_init(&ctx);
-
 	if(rabbit_set_key_and_iv(&ctx, (uint8_t *)key, 16, iv, 8)) {
 		printf("Rabbit context filling error!\n");
 		exit(1);
@@ -118,9 +116,9 @@ main(int argc, char *argv[])
 	
 	while((byte = fread(buf, 1, block, fp)) > 0) {
 		if(action == 1)
-			rabbit_encrypt(&ctx, buf, byte, out);
+			rabbit_crypt(&ctx, buf, byte, out);
 		else
-			rabbit_decrypt(&ctx, buf, byte, out);
+			rabbit_crypt(&ctx, buf, byte, out);
 		
 		fwrite(out, 1, byte, fd);
 	}
